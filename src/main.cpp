@@ -1,5 +1,7 @@
 #include "Asteroid.h"
 #include "Spaceship.h"
+#include "constants.h"
+#include <memory>
 #include <raylib.h>
 #include <raymath.h>
 
@@ -8,7 +10,15 @@
 #define SHIP_SPEED 25
 #define ROT_SPEED 1.0f
 
+typedef struct State {
+  float now;
+  float delta;
+  Spaceship *ship;
+  std::vector<Asteroid *> asteroids;
+} State;
+
 void render(State &state) {
+
   ClearBackground(BLACK);
   state.ship->draw_ship();
 
@@ -17,6 +27,10 @@ void render(State &state) {
   if (IsKeyDown(KEY_UP) && (int)(state.now * 100) % 2 == 0) {
     // 0.01s on / 0.01s off
     state.ship->draw_thrust();
+  }
+
+  for (Asteroid *aster : state.asteroids) {
+    aster->draw_asteroid();
   }
 }
 
@@ -50,6 +64,26 @@ void update(State &state) {
   state.ship->pos.y = fmodf(state.ship->pos.y + SCREEN_HEIGHT, SCREEN_HEIGHT);
 }
 
+void clean(State &state) {
+  for (Asteroid *aster : state.asteroids) {
+    delete aster;
+  }
+}
+
+void init_level(State &state) {
+  float ran_ang = random_range<float>(0.0f, ANGLE_DEG);
+  for (size_t i = 0; i < 10; i++) {
+    Asteroid *aster_ = new Asteroid(
+        AsteroidSize::BIG,
+        {static_cast<float>(random_range<int>(0, SCREEN_WIDTH)),
+         static_cast<float>(random_range<int>(0, SCREEN_HEIGHT))},
+        Vector2Scale({cos(ran_ang * DEG2RAD), sin(ran_ang * DEG2RAD)},
+                     random_range<float>(1.0f, 3.0f)));
+    state.asteroids.push_back(aster_);
+    ran_ang = random_range<int>(0.0f, ANGLE_DEG);
+  }
+}
+
 int main(void) {
 
   InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Asteroids Clone");
@@ -58,26 +92,23 @@ int main(void) {
 
   // init spaceship
   Spaceship ship;
-  Asteroid *aster_ =
-      new Asteroid(AsteroidSize::SMALL, (Vector2){(float)SCREEN_WIDTH / 2,
-                                                  (float)SCREEN_HEIGHT / 2});
   State state = {0.0f, 0.0f, &ship};
 
-  const int point_s = 4;
+  init_level(state);
 
   while (!WindowShouldClose()) {
-    if (IsKeyPressed(KEY_R)) {
-      delete aster_;
-      aster_ = new Asteroid(
-          AsteroidSize::SMALL,
-          (Vector2){(float)SCREEN_WIDTH / 2, (float)SCREEN_HEIGHT / 2});
-    }
+    // if (IsKeyPressed(KEY_R)) {
+    //   delete aster_;
+    //   aster_ =
+    //       new Asteroid(AsteroidSize::BIG, (Vector2){(float)SCREEN_WIDTH / 2,
+    //                                                 (float)SCREEN_HEIGHT /
+    //                                                 2});
+    // }
 
     update(state);
 
     BeginDrawing();
     render(state);
-    aster_->draw_asteroid();
     EndDrawing();
   }
 
