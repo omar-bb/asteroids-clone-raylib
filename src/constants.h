@@ -13,14 +13,10 @@
 #define THRUST_MAP {{-0.2, -0.4}, {0.0, -0.8}, {0.2, -0.4}}
 
 // asteroid constants
-#define MIN_NB_SIDES 6
-#define MAX_NB_SIDES 10
+#define MIN_NB_SIDES 8
+#define MAX_NB_SIDES 15
 #define MIN_R 0.3f
 #define MAX_R 1.0f
 #define ANGLE_DEG 360.0f
-
-#define NUMBER_OF_SIDES 10
-#define MIN_ANG 25.0f
-#define MAX_ANG 36.0f
 
 #endif
