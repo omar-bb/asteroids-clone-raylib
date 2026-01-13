@@ -1,0 +1,4 @@
+obj/
+build/
+.clangd
+.DS_Store
