@@ -28,10 +28,4 @@ public:
   void draw_thrust();
 };
 
-typedef struct State {
-  float now;
-  float delta;
-  Spaceship *ship;
-} State;
-
 #endif
