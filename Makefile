@@ -5,7 +5,7 @@ BUILD_DIR := build
 OBJ_DIR := obj
 
 # the program name
-TARGET := pong
+TARGET := asteroids
 
 # cpp compiler and flags
 CXX := clang++
