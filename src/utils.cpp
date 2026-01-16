@@ -1,15 +1,14 @@
 #include "utils.h"
 
-void draw_lines(const Vector2 points_[], size_t arr_size_, Vector2 origin_,
-                float scale_, float rot_, float thickness_) {
-  auto apply_transform = [=](Vector2 vect_) {
-    return Vector2Add(Vector2Scale(Vector2Rotate(vect_, rot_), scale_),
-                      origin_);
-  };
-
-  for (std::size_t x = 0; x < arr_size_; x++) {
-    DrawLineEx(apply_transform(points_[x % arr_size_]),
-               apply_transform(points_[(x + 1) % arr_size_]), thickness_,
-               WHITE);
-  }
-}
+// template <std::size_t SIZE>
+// void draw_lines(const std::array<Vector2, SIZE> &points, Vector2 origin,
+//                 float scale, float rot, float thickness) {
+//   auto apply_transform = [=](Vector2 vect) {
+//     return Vector2Add(Vector2Scale(Vector2Rotate(vect, rot), scale), origin);
+//   };
+//
+//   for (std::size_t i = 0; i < SIZE; i++) {
+//     DrawLineEx(apply_transform(points[i % SIZE]),
+//                apply_transform(points[(i + 1) % SIZE]), thickness, WHITE);
+//   }
+// }
