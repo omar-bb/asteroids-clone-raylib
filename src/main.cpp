@@ -1,36 +1,29 @@
 #include "Asteroid.h"
 #include "Spaceship.h"
 #include "constants.h"
-#include <memory>
 #include <raylib.h>
 #include <raymath.h>
+#include <vector>
 
-#define TAU 2 * PI
-#define DRAG 1.9f
-#define SHIP_SPEED 25
-#define ROT_SPEED 1.0f
-
-typedef struct State {
+struct State {
   float now;
   float delta;
-  Spaceship *ship;
-  std::vector<Asteroid *> asteroids;
-} State;
+  Spaceship &ship;
+  std::vector<Asteroid> asteroids;
+};
 
 void render(State &state) {
 
   ClearBackground(BLACK);
-  state.ship->draw_ship();
+  state.ship.draw_ship();
 
-  // TraceLog(LOG_INFO,
-  //          TextFormat("delta %f, now: %f", state.delta, state.now * 100));
   if (IsKeyDown(KEY_UP) && (int)(state.now * 100) % 2 == 0) {
     // 0.01s on / 0.01s off
-    state.ship->draw_thrust();
+    state.ship.draw_thrust();
   }
 
-  for (Asteroid *aster : state.asteroids) {
-    aster->draw_asteroid();
+  for (Asteroid &aster : state.asteroids) {
+    aster.draw_asteroid();
   }
 }
 
@@ -39,48 +32,49 @@ void update(State &state) {
 
   state.delta = GetFrameTime();
   state.now += state.delta;
-  // state.ship->set_rot(10.0f * state.now);
 
   if (IsKeyDown(KEY_RIGHT)) {
-    state.ship->rot += TAU * ROT_SPEED * state.delta;
+    state.ship.set_rot(state.ship.get_rot() + TAU * ROT_SPEED * state.delta);
   }
 
   if (IsKeyDown(KEY_LEFT)) {
-    state.ship->rot -= TAU * ROT_SPEED * state.delta;
+    state.ship.set_rot(state.ship.get_rot() - TAU * ROT_SPEED * state.delta);
   }
 
-  state.ship->ship_dir.x = cos(state.ship->rot + (PI * 0.5));
-  state.ship->ship_dir.y = sin(state.ship->rot + (PI * 0.5));
+  state.ship.set_ship_dir({cos(state.ship.get_rot() + PI * 0.5f),
+                           sin(state.ship.get_rot() + PI * 0.5f)});
 
   if (IsKeyDown(KEY_UP)) {
-    state.ship->vel =
-        Vector2Add(state.ship->vel, Vector2Scale(state.ship->ship_dir,
-                                                 SHIP_SPEED * state.delta));
+    state.ship.set_vel(Vector2Add(
+        state.ship.get_vel(),
+        Vector2Scale(state.ship.get_ship_dir(), SHIP_SPEED * state.delta)));
   }
 
-  state.ship->vel = Vector2Scale(state.ship->vel, expf(-DRAG * state.delta));
-  state.ship->pos = Vector2Add(state.ship->pos, state.ship->vel);
-  state.ship->pos.x = fmodf(state.ship->pos.x + SCREEN_WIDTH, SCREEN_WIDTH);
-  state.ship->pos.y = fmodf(state.ship->pos.y + SCREEN_HEIGHT, SCREEN_HEIGHT);
-}
+  state.ship.set_vel(
+      Vector2Scale(state.ship.get_vel(), expf(-DRAG * state.delta)));
+  state.ship.set_pos(Vector2Add(state.ship.get_pos(), state.ship.get_vel()));
+  state.ship.set_pos(
+      {fmodf(state.ship.get_pos().x + SCREEN_WIDTH, SCREEN_WIDTH),
+       fmodf(state.ship.get_pos().y + SCREEN_HEIGHT, SCREEN_HEIGHT)});
 
-void clean(State &state) {
-  for (Asteroid *aster : state.asteroids) {
-    delete aster;
+  for (Asteroid &aster : state.asteroids) {
+    aster.set_pos(Vector2Add(aster.get_pos(), aster.get_vel()));
+    aster.set_pos({fmodf(aster.get_pos().x + SCREEN_WIDTH, SCREEN_WIDTH),
+                   fmodf(aster.get_pos().y + SCREEN_HEIGHT, SCREEN_HEIGHT)});
   }
 }
 
 void init_level(State &state) {
-  float ran_ang = random_range<float>(0.0f, ANGLE_DEG);
-  for (size_t i = 0; i < 10; i++) {
-    Asteroid *aster_ = new Asteroid(
-        AsteroidSize::BIG,
-        {static_cast<float>(random_range<int>(0, SCREEN_WIDTH)),
-         static_cast<float>(random_range<int>(0, SCREEN_HEIGHT))},
-        Vector2Scale({cos(ran_ang * DEG2RAD), sin(ran_ang * DEG2RAD)},
-                     random_range<float>(1.0f, 3.0f)));
-    state.asteroids.push_back(aster_);
-    ran_ang = random_range<int>(0.0f, ANGLE_DEG);
+  for (size_t i = 0; i < 20; i++) {
+    float ran_ang = random_range<float>(0.0f, ANGLE_DEG);
+    AsteroidSizeWrapper ran_aster_s(
+        static_cast<AsteroidSize>(random_range<int>(0, 2)));
+    Vector2 pos = {static_cast<float>(random_range<int>(0, SCREEN_WIDTH)),
+                   static_cast<float>(random_range<int>(0, SCREEN_HEIGHT))};
+    Vector2 vel_dir = {cos(ran_ang * DEG2RAD), sin(ran_ang * DEG2RAD)};
+    Vector2 vel = Vector2Scale(vel_dir, ran_aster_s.vel_scale() *
+                                            random_range<float>(1.0f, 3.0f));
+    state.asteroids.emplace_back(ran_aster_s.size(), pos, vel);
   }
 }
 
@@ -92,18 +86,11 @@ int main(void) {
 
   // init spaceship
   Spaceship ship;
-  State state = {0.0f, 0.0f, &ship};
+  State state = {0.0f, 0.0f, ship};
 
   init_level(state);
 
   while (!WindowShouldClose()) {
-    // if (IsKeyPressed(KEY_R)) {
-    //   delete aster_;
-    //   aster_ =
-    //       new Asteroid(AsteroidSize::BIG, (Vector2){(float)SCREEN_WIDTH / 2,
-    //                                                 (float)SCREEN_HEIGHT /
-    //                                                 2});
-    // }
 
     update(state);
 
