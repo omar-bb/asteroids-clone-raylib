@@ -2,3 +2,5 @@ obj/
 build/
 .clangd
 .DS_Store
+LOG.txt
+.vscode
